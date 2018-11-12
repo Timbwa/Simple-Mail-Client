@@ -4,7 +4,6 @@
  * Date   : 11/11/2018
  * */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -40,7 +39,7 @@ struct emailList{
 
 typedef struct emailList *EmailList;
 
-// function to check for succesful file opening
+// function to check for successful file opening
 void fileError(FILE *file){
     if (file == NULL){
         printf("Could not open file !");
@@ -78,7 +77,7 @@ void printEmails(EmailList inboxList, EmailList sentList){
     printf("\nInbox\n");
 
     while (mail != NULL){
-        printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s", mail->id, mail->senderReceiver,
+        printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s\n", mail->id, mail->senderReceiver,
                mail->date.day, mail->date.month, mail->date.year, mail->date.hour, mail->date.min, mail->subject, mail->content);
         mail = mail->next;
     }
@@ -87,7 +86,7 @@ void printEmails(EmailList inboxList, EmailList sentList){
     printf("\nSent box\n");
 
     while (mail != NULL){
-        printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s", mail->id, mail->senderReceiver,
+        printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s \n", mail->id, mail->senderReceiver,
                mail->date.day, mail->date.month, mail->date.year, mail->date.hour, mail->date.min, mail->subject, mail->content);
         mail = mail->next;
     }
@@ -116,7 +115,7 @@ EmailList initialiseInbox(){
         EmailNode *mail = (EmailNode *)malloc(sizeof(EmailNode));
         mail->next = NULL;
         // initialise email node
-        sscanf(line, "%d;%[^;];%[^;];%[^;];%[^;]",&mail->id,
+        sscanf(line, "%d;%[^;];%[^;];%[^;];%[^\n]",&mail->id,
                       mail->senderReceiver,dateTime,mail->subject,mail->content);
         sscanf(dateTime,"%2d/%2d/%4d %2d:%2d", &mail->date.day,
                         &mail->date.month,
@@ -156,7 +155,7 @@ EmailList initialiseSent(){
     while(fgets(line,350, sentFile) && i < size){
         EmailNode *mail = (EmailNode *)malloc(sizeof(EmailNode));
         mail->next = NULL;
-        sscanf(line, "%d;%[^;];%[^;];%[^;];%[^;]",&mail->id,
+        sscanf(line, "%d;%[^;];%[^;];%[^;];%[^\n]",&mail->id,
                mail->senderReceiver,dateTime,mail->subject,mail->content);
         sscanf(dateTime,"%2d/%2d/%4d %2d:%2d", &mail->date.day,
                &mail->date.month,
@@ -169,7 +168,7 @@ EmailList initialiseSent(){
 
     }
     // append new line to the last email read
-    strcat(sentList->tail->content,"\n");
+    //strcat(sentList->tail->content,"\n");
     fclose(sentFile);
     return sentList;
 }
@@ -183,7 +182,7 @@ EmailList sendEmail(EmailList sentList, char receiver[50], DateTime date, char s
     strcpy(newMail->senderReceiver, receiver);
     strcpy(newMail->subject, subject);
     strcpy(newMail->content, content);
-    strcat(newMail->content,"\n");
+    //strcat(newMail->content,"\n");
     newMail->date.day = date.day;
     newMail->date.month = date.month;
     newMail->date.year = date.year;
@@ -202,19 +201,6 @@ int isListEmpty(EmailList mailList){
     return (mailList->size == 0);
 }
 
-// function to overwrite ID's when deletion occurs
-EmailList reassignIDs(EmailList mailList){
-    int i = 1;
-    EmailNode *tempNode = mailList->head->next;
-
-    while (tempNode != NULL){
-        tempNode->id = i;
-        tempNode = tempNode->next;
-        i++;
-    }
-    return mailList;
-}
-
 EmailList deleteInboxEmail(EmailList inboxList, int deleteID){
     if(!isListEmpty(inboxList)){
         EmailNode *currentNode;
@@ -229,7 +215,6 @@ EmailList deleteInboxEmail(EmailList inboxList, int deleteID){
             deleteNode = currentNode->next;
             currentNode->next = currentNode->next->next;
             free(deleteNode);
-            inboxList = reassignIDs(inboxList);
             inboxList->size--;
             printf("Email with ID %d has been deleted from your inbox\n",deleteID);
         }
@@ -255,7 +240,6 @@ EmailList deleteSentEmail(EmailList sentList, int deleteID) {
             deleteNode = currentNode->next;
             currentNode->next = currentNode->next->next;
             free(deleteNode);
-            sentList = reassignIDs(sentList);
             sentList->size--;
             printf("Email with ID %d has been deleted from your sent box\n",deleteID);
         }
@@ -268,8 +252,7 @@ EmailList deleteSentEmail(EmailList sentList, int deleteID) {
 }
 
 // functions to remove spaces from entered string
-void removeSpaces(char str[])
-{
+void removeSpaces(char str[]) {
     int count = 0;
 
     for (int i = 0;str[i]; ++i) {
@@ -315,8 +298,8 @@ void searchEmail(EmailList inboxList, EmailList sentList){
                         strcpy(tempString,mailInbox->senderReceiver);
                         removeSpaces(tempString);
                         removeSpaces(searchParam);
-                        if(!strcmp(lowerChar(searchParam), lowerChar(tempString))){
-                            printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s \n", mailInbox->id, mailInbox->senderReceiver,
+                        if(((strstr(lowerChar(tempString), lowerChar(searchParam))) != NULL)){
+                            printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s\n", mailInbox->id, mailInbox->senderReceiver,
                                    mailInbox->date.day, mailInbox->date.month, mailInbox->date.year, mailInbox->date.hour, mailInbox->date.min, mailInbox->subject, mailInbox->content);
                         }
                         mailInbox = mailInbox->next;
@@ -330,8 +313,8 @@ void searchEmail(EmailList inboxList, EmailList sentList){
                         strcpy(tempString,mailInbox->subject);
                         removeSpaces(tempString);
                         removeSpaces(searchParam);
-                        if(!strcmp(lowerChar(searchParam), lowerChar(tempString))){
-                            printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s \n", mailInbox->id, mailInbox->senderReceiver,
+                        if(((strstr(lowerChar(tempString), lowerChar(searchParam))) != NULL)){
+                            printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s\n", mailInbox->id, mailInbox->senderReceiver,
                                    mailInbox->date.day, mailInbox->date.month, mailInbox->date.year, mailInbox->date.hour, mailInbox->date.min, mailInbox->subject, mailInbox->content);
                         }
                         mailSent = mailSent->next;
@@ -351,8 +334,8 @@ void searchEmail(EmailList inboxList, EmailList sentList){
                         strcpy(tempString,mailSent->senderReceiver);
                         removeSpaces(tempString);
                         removeSpaces(searchParam);
-                        if(!strcmp(lowerChar(searchParam), lowerChar(tempString))){
-                            printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s \n", mailSent->id, mailSent->senderReceiver,
+                        if(((strstr(lowerChar(tempString), lowerChar(searchParam))) != NULL)){
+                            printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s\n", mailSent->id, mailSent->senderReceiver,
                                    mailSent->date.day, mailSent->date.month, mailSent->date.year, mailSent->date.hour, mailSent->date.min, mailSent->subject, mailSent->content);
                         }
                         mailSent = mailSent->next;
@@ -366,8 +349,8 @@ void searchEmail(EmailList inboxList, EmailList sentList){
                         strcpy(tempString,mailSent->subject);
                         removeSpaces(tempString);
                         removeSpaces(searchParam);
-                        if(!strcmp(lowerChar(searchParam), lowerChar(tempString))){
-                            printf("%-4d%s\t%2d/%2d/%-6d%2d:%2d\t%s\t%s \n", mailSent->id, mailSent->senderReceiver,
+                        if(((strstr(lowerChar(tempString), lowerChar(searchParam))) != NULL)){
+                            printf("%-4d%s\t%2d/%2d/%-6d%02d:%02d\t%s\t%s\n", mailSent->id, mailSent->senderReceiver,
                                    mailSent->date.day, mailSent->date.month, mailSent->date.year, mailSent->date.hour, mailSent->date.min, mailSent->subject, mailSent->content);
                         }
                         mailSent = mailSent->next;
@@ -383,7 +366,7 @@ void searchEmail(EmailList inboxList, EmailList sentList){
 
 }
 
-// overwrite the files with currrent lists
+// overwrite the files with current lists
 void overwrite(EmailList inboxList, EmailList sentList){
     FILE *inboxFile, *sentfile;
     inboxFile = fopen("inbox.txt","w+");
@@ -395,14 +378,14 @@ void overwrite(EmailList inboxList, EmailList sentList){
     EmailNode *mailSent = sentList->head->next;
 
     while(mailInbox != NULL){
-        fprintf(inboxFile,"%d;%s;%2d/%2d/%4d %2d:%d;%s;%s", mailInbox->id, mailInbox->senderReceiver,
+        fprintf(inboxFile,"%d;%s;%2d/%2d/%4d %2d:%d;%s;%s\n", mailInbox->id, mailInbox->senderReceiver,
                 mailInbox->date.day, mailInbox->date.month, mailInbox->date.year, mailInbox->date.hour, mailInbox->date.min, mailInbox->subject, mailInbox->content);
         mailInbox = mailInbox->next;
     }
     fclose(inboxFile);
 
     while(mailSent != NULL){
-        fprintf(sentfile,"%d;%s;%2d/%2d/%4d %2d:%d;%s;%s", mailSent->id, mailSent->senderReceiver,
+        fprintf(sentfile,"%d;%s;%2d/%2d/%4d %2d:%d;%s;%s\n", mailSent->id, mailSent->senderReceiver,
                 mailSent->date.day, mailSent->date.month, mailSent->date.year, mailSent->date.hour, mailSent->date.min, mailSent->subject, mailSent->content);
         mailSent = mailSent->next;
     }
@@ -421,16 +404,13 @@ int main() {
     char content[200];
     DateTime date;
 
-    //printf("Date: %02d/%02d/%04d\n",t.tm_mday,t.tm_mon+1,t.tm_year+1900);
-    //printf("Time: %02d:%02d\n\n", t.tm_hour, t.tm_min);
-
     EmailList inboxList = initialiseInbox();
     EmailList sentList = initialiseSent();
 
     printf("Welcome to Your Email Client!\n"
                    "Your inbox and sent box have been loaded successfully.\n");
     while(option){
-        printf("\n--- MENU ---\n"
+        printf("--- MENU ---\n"
                        "1. Send an email\n"
                        "2. Delete an email from your inbox\n"
                        "3. Delete an email from your sent box\n"
